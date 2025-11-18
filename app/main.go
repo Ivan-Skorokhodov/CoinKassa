@@ -4,6 +4,7 @@ import (
 	"CoinKassa/internal/delivery"
 	"CoinKassa/internal/repository"
 	"CoinKassa/internal/usecase"
+	"CoinKassa/pkg/logs"
 	"log"
 	"net/http"
 )
@@ -19,6 +20,8 @@ func main() {
 	//siteMux.HandleFunc("/api/v1/login", handler.LoginStore)
 	//siteMux.HandleFunc("/api/v1/logout", handler.LogoutStore)
 
+	app := logs.LoggerMiddleware(siteMux)
+
 	log.Println("Server started on :8080")
-	log.Fatal(http.ListenAndServe(":8080", siteMux))
+	log.Fatal(http.ListenAndServe(":8080", app))
 }
