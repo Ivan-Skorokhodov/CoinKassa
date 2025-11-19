@@ -3,10 +3,11 @@ package usecase
 import (
 	"CoinKassa/internal/models"
 	"CoinKassa/internal/repository"
+	"context"
 )
 
 type UsecaseInterface interface {
-	RegisterStore(store models.StoreRegisterInput) error
+	RegisterStore(ctx context.Context, store models.StoreRegisterInput) error
 }
 
 type UseCase struct {
@@ -19,12 +20,12 @@ func NewUseCase(repo repository.RepositoryInterface) *UseCase {
 	}
 }
 
-func (u *UseCase) RegisterStore(inputData models.StoreRegisterInput) error {
+func (u *UseCase) RegisterStore(ctx context.Context, inputData models.StoreRegisterInput) error {
 	store := models.Store{
 		Login:        inputData.Login,
 		Email:        inputData.Email,
 		PasswordHash: inputData.Password,
 	}
-	err := u.repo.RegisterStore(store)
+	err := u.repo.RegisterStore(ctx, store)
 	return err
 }

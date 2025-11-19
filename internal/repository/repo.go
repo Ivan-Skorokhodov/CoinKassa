@@ -2,21 +2,20 @@ package repository
 
 import (
 	"CoinKassa/internal/models"
+	"context"
 )
 
 type RepositoryInterface interface {
-	RegisterStore(store models.Store) error
+	RegisterStore(ctx context.Context, store models.Store) error
 }
 
 type Repository struct {
-	stores []models.Store
 }
 
 func NewRepository() *Repository {
 	return &Repository{}
 }
 
-func (r *Repository) RegisterStore(store models.Store) error {
-	r.stores = append(r.stores, store)
+func (r *Repository) RegisterStore(ctx context.Context, store models.Store) error {
 	return nil
 }

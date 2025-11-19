@@ -20,6 +20,7 @@ func main() {
 	//siteMux.HandleFunc("/api/v1/login", handler.LoginStore)
 	//siteMux.HandleFunc("/api/v1/logout", handler.LogoutStore)
 
+	// TODO: добавть request-id middleware (подтягивать из заголовка, если нет, то генерить)
 	app := logs.LoggerMiddleware(siteMux)
 
 	log.Println("Server started on :8080")

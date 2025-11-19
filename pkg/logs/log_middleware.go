@@ -69,3 +69,4 @@ func LoggerMiddleware(next http.Handler) http.Handler {
 }
 
 //TODO: реализовать контекст с логами для отдельных горутин, не внтури request.Context
+//TODO: может быть реализовать перенаправление логов кодом
