@@ -40,7 +40,7 @@ func HashPasswordAndCreateSalt(password string, store *models.Store) error {
 
 	hashedPassword := hashPassword(password, salt)
 	store.PasswordHash = hashedPassword
-	store.Salt = base64.RawStdEncoding.EncodeToString(salt)
+	store.Salt = salt
 
 	return nil
 }

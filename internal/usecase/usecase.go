@@ -14,6 +14,7 @@ import (
 type UsecaseInterface interface {
 	RegisterStore(ctx context.Context, storeRegisterInput *models.StoreRegisterInput) (string, error)
 	AuthStore(ctx context.Context, cookie string) (bool, error)
+	LoginStore(ctx context.Context, storeLoginInput *models.StoreLoginInput) (string, error)
 }
 
 type UseCase struct {
@@ -26,6 +27,9 @@ func NewUseCase(repo repository.RepositoryInterface) *UseCase {
 	}
 }
 
+var ErrLoginUsed = errors.New("login is used")
+var ErrLoginOrPasswordIncorrect = errors.New("login or password incorrect")
+
 func (u *UseCase) RegisterStore(ctx context.Context, inputData *models.StoreRegisterInput) (string, error) {
 	isUnique, err := u.repo.IsLoginUnique(ctx, inputData.Login)
 	if err != nil {
@@ -33,8 +37,8 @@ func (u *UseCase) RegisterStore(ctx context.Context, inputData *models.StoreRegi
 		return "", err
 	}
 	if !isUnique {
-		logs.PrintLog(ctx, "[usecase] RegisterStore", "Login is used")
-		return "", errors.New("login is used")
+		logs.PrintLog(ctx, "[usecase] RegisterStore", "login is used")
+		return "", ErrLoginUsed
 	}
 
 	store := models.Store{
@@ -92,4 +96,39 @@ func (u *UseCase) AuthStore(ctx context.Context, cookie string) (bool, error) {
 
 	logs.PrintLog(ctx, "[usecase] AuthStore", "Store authorized")
 	return true, nil
+}
+
+func (u *UseCase) LoginStore(ctx context.Context, inputData *models.StoreLoginInput) (string, error) {
+	store, err := u.repo.GetStoreByLogin(ctx, inputData.Login)
+	if err != nil {
+		logs.PrintLog(ctx, "[usecase] LoginStore", err.Error())
+		return "", err
+	}
+
+	if store == nil {
+		logs.PrintLog(ctx, "[usecase] LoginStore", "Login incorrect")
+		return "", ErrLoginOrPasswordIncorrect
+	}
+
+	isValid := hash.CheckPassword(inputData.Password, store.PasswordHash, store.Salt)
+	if !isValid {
+		logs.PrintLog(ctx, "[usecase] LoginStore", "Password incorrect")
+		return "", ErrLoginOrPasswordIncorrect
+	}
+
+	cookie, err := hash.CreateUID(16)
+	if err != nil {
+		logs.PrintLog(ctx, "[usecase] RegisterStore", err.Error())
+		return "", err
+	}
+	store.Cookie = cookie
+	store.ExpireTime = time.Now().AddDate(0, 1, 0)
+
+	err = u.repo.ChangeCookie(ctx, store, cookie)
+	if err != nil {
+		logs.PrintLog(ctx, "[usecase] LoginStore", err.Error())
+		return "", err
+	}
+
+	return cookie, nil
 }

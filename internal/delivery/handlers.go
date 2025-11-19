@@ -29,14 +29,14 @@ func NewHandler(usecase usecase.UsecaseInterface) *Handler {
 func (h *Handler) RegisterStore(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		logs.PrintLog(r.Context(), "[delivery] RegisterStore", "Method not allowed")
-		response.SendErrorResponse("Method not allowed", http.StatusMethodNotAllowed, w)
+		response.SendErrorResponse("method not allowed", http.StatusMethodNotAllowed, w)
 		return
 	}
 
 	var inputData models.StoreRegisterInput
 	if err := json.NewDecoder(r.Body).Decode(&inputData); err != nil {
 		logs.PrintLog(r.Context(), "[delivery] RegisterStore", "Input data is not acceptable")
-		response.SendErrorResponse("Input data is not acceptable", http.StatusBadRequest, w)
+		response.SendErrorResponse("input data is not acceptable", http.StatusBadRequest, w)
 		return
 	}
 
@@ -49,7 +49,7 @@ func (h *Handler) RegisterStore(w http.ResponseWriter, r *http.Request) {
 
 	cookieValue, err := h.usecase.RegisterStore(r.Context(), &inputData)
 	if err != nil {
-		if errors.Is(err, errors.New("login is used")) {
+		if errors.Is(err, usecase.ErrLoginUsed) {
 			logs.PrintLog(r.Context(), "[delivery] RegisterStore", err.Error())
 			response.SendErrorResponse(err.Error(), http.StatusBadRequest, w)
 			return
@@ -67,14 +67,14 @@ func (h *Handler) RegisterStore(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) AuthStore(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		logs.PrintLog(r.Context(), "[delivery] AuthStore", "Method not allowed")
-		response.SendErrorResponse("Method not allowed", http.StatusMethodNotAllowed, w)
+		response.SendErrorResponse("method not allowed", http.StatusMethodNotAllowed, w)
 		return
 	}
 
 	cookieValue, err := r.Cookie("session_id")
 	if err != nil {
 		logs.PrintLog(r.Context(), "[delivery] AuthStore", "Cookie not found")
-		response.SendErrorResponse("Cookie not found", http.StatusUnauthorized, w)
+		response.SendErrorResponse("cookie not found", http.StatusUnauthorized, w)
 		return
 	}
 
@@ -92,4 +92,42 @@ func (h *Handler) AuthStore(w http.ResponseWriter, r *http.Request) {
 		logs.PrintLog(r.Context(), "[delivery] AuthStore", "Store unauthorized")
 		response.SendErrorResponse("unauthorized", http.StatusUnauthorized, w)
 	}
+}
+
+func (h *Handler) LoginStore(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		logs.PrintLog(r.Context(), "[delivery] LoginStore", "Method not allowed")
+		response.SendErrorResponse("method not allowed", http.StatusMethodNotAllowed, w)
+		return
+	}
+
+	var inputData models.StoreLoginInput
+	if err := json.NewDecoder(r.Body).Decode(&inputData); err != nil {
+		logs.PrintLog(r.Context(), "[delivery] LoginStore", "Input data is not acceptable")
+		response.SendErrorResponse("input data is not acceptable", http.StatusBadRequest, w)
+		return
+	}
+
+	err := h.validator.Struct(inputData)
+	if err != nil {
+		logs.PrintLog(r.Context(), "[delivery] LoginStore", fmt.Sprintf("Validation error: %s", err.Error()))
+		response.SendErrorResponse(err.Error(), http.StatusBadRequest, w)
+		return
+	}
+
+	cookieValue, err := h.usecase.LoginStore(r.Context(), &inputData)
+	if err != nil {
+		if errors.Is(err, usecase.ErrLoginOrPasswordIncorrect) {
+			logs.PrintLog(r.Context(), "[delivery] LoginStore", err.Error())
+			response.SendErrorResponse(err.Error(), http.StatusBadRequest, w)
+			return
+		}
+		logs.PrintLog(r.Context(), "[delivery] LoginStore", err.Error())
+		response.SendErrorResponse("server error", http.StatusInternalServerError, w)
+		return
+	}
+
+	cookie.SetCookie(w, cookieValue)
+	response.SendOKResponse(w)
+	logs.PrintLog(r.Context(), "[delivery] LoginStore", fmt.Sprintf("Store logged in successfully: %+v", inputData.Login))
 }

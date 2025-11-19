@@ -7,7 +7,7 @@ type Store struct {
 	Login        string
 	Email        string
 	PasswordHash string
-	Salt         string
+	Salt         []byte
 	Token        string
 	Cookie       string
 	ExpireTime   time.Time
