@@ -1,6 +1,7 @@
 package delivery
 
 import (
+	"CoinKassa/internal/delivery/cookie"
 	"CoinKassa/internal/delivery/response"
 	"CoinKassa/internal/models"
 	"CoinKassa/internal/usecase"
@@ -46,7 +47,7 @@ func (h *Handler) RegisterStore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie, err := h.usecase.RegisterStore(r.Context(), inputData)
+	cookieValue, err := h.usecase.RegisterStore(r.Context(), inputData)
 	if err != nil {
 		if errors.Is(err, errors.New("login is used")) {
 			logs.PrintLog(r.Context(), "[delivery] RegisterStore", err.Error())
@@ -58,6 +59,7 @@ func (h *Handler) RegisterStore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = cookie
+	cookie.SetCookie(w, cookieValue)
 	response.SendOKResponse(w)
+	logs.PrintLog(r.Context(), "[delivery] RegisterStore", fmt.Sprintf("Store registered successfully: %+v", inputData.Login))
 }
