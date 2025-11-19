@@ -6,6 +6,7 @@ import (
 	"CoinKassa/internal/usecase"
 	"CoinKassa/pkg/logs"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -45,12 +46,18 @@ func (h *Handler) RegisterStore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.usecase.RegisterStore(r.Context(), inputData)
+	cookie, err := h.usecase.RegisterStore(r.Context(), inputData)
 	if err != nil {
+		if errors.Is(err, errors.New("login is used")) {
+			logs.PrintLog(r.Context(), "[delivery] RegisterStore", err.Error())
+			response.SendErrorResponse(err.Error(), http.StatusBadRequest, w)
+			return
+		}
 		logs.PrintLog(r.Context(), "[delivery] RegisterStore", err.Error())
-		response.SendErrorResponse(err.Error(), http.StatusBadRequest, w)
+		response.SendErrorResponse(err.Error(), http.StatusInternalServerError, w)
 		return
 	}
 
+	_ = cookie
 	response.SendOKResponse(w)
 }

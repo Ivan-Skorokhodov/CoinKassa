@@ -6,7 +6,8 @@ import (
 )
 
 type RepositoryInterface interface {
-	RegisterStore(ctx context.Context, store models.Store) error
+	SaveStore(ctx context.Context, store models.Store) error
+	IsLoginUnique(ctx context.Context, login string) (bool, error)
 }
 
 type Repository struct {
@@ -16,6 +17,10 @@ func NewRepository() *Repository {
 	return &Repository{}
 }
 
-func (r *Repository) RegisterStore(ctx context.Context, store models.Store) error {
+func (r *Repository) SaveStore(ctx context.Context, store models.Store) error {
 	return nil
+}
+
+func (r *Repository) IsLoginUnique(ctx context.Context, login string) (bool, error) {
+	return false, nil
 }
