@@ -17,6 +17,7 @@ func main() {
 	handler := delivery.NewHandler(usecase)
 
 	siteMux.HandleFunc("/api/v1/register", handler.RegisterStore)
+	siteMux.HandleFunc("/api/v1/isAuth", handler.AuthStore)
 	//siteMux.HandleFunc("/api/v1/login", handler.LoginStore)
 	//siteMux.HandleFunc("/api/v1/logout", handler.LogoutStore)
 

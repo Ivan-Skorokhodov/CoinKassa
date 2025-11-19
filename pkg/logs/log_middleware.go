@@ -44,7 +44,7 @@ func logContext(ctx context.Context, path string, start time.Time) {
 		fmt.Fprintf(
 			&buf,
 			"\t[%s] %s: %s\n",
-			e.Time.Format(time.RFC3339Nano),
+			e.Time.Format(time.RFC3339),
 			e.Function,
 			e.Message,
 		)
