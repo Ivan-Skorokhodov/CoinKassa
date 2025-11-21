@@ -15,6 +15,7 @@ type UsecaseInterface interface {
 	RegisterStore(ctx context.Context, storeRegisterInput *models.StoreRegisterInput) (string, error)
 	AuthStore(ctx context.Context, cookie string) (bool, error)
 	LoginStore(ctx context.Context, storeLoginInput *models.StoreLoginInput) (string, error)
+	LogoutStore(ctx context.Context, cookie string) error
 }
 
 type UseCase struct {
@@ -124,11 +125,21 @@ func (u *UseCase) LoginStore(ctx context.Context, inputData *models.StoreLoginIn
 	store.Cookie = cookie
 	store.ExpireTime = time.Now().AddDate(0, 1, 0)
 
-	err = u.repo.ChangeCookie(ctx, store, cookie)
+	err = u.repo.ChangeCookie(ctx, store)
 	if err != nil {
 		logs.PrintLog(ctx, "[usecase] LoginStore", err.Error())
 		return "", err
 	}
 
 	return cookie, nil
+}
+
+func (u *UseCase) LogoutStore(ctx context.Context, cookie string) error {
+	err := u.repo.DeleteStoreCookie(ctx, cookie)
+	if err != nil {
+		logs.PrintLog(ctx, "[usecase] LogoutStore", err.Error())
+		return err
+	}
+	logs.PrintLog(ctx, "[usecase] LogoutStore", "Store logged out successfully")
+	return nil
 }

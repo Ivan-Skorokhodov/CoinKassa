@@ -18,3 +18,17 @@ func SetCookie(w http.ResponseWriter, cookieValue string) {
 	}
 	http.SetCookie(w, &cookie)
 }
+
+func DeleteCookie(w http.ResponseWriter, cookieValue string) {
+	deletedExpiration := time.Now().AddDate(0, 0, -1)
+	cookie := http.Cookie{
+		Name:     "session_id",
+		Value:    cookieValue,
+		Expires:  deletedExpiration,
+		HttpOnly: true,
+		//SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteNoneMode,
+		Secure:   false,
+	}
+	http.SetCookie(w, &cookie)
+}

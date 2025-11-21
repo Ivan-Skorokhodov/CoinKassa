@@ -131,3 +131,29 @@ func (h *Handler) LoginStore(w http.ResponseWriter, r *http.Request) {
 	response.SendOKResponse(w)
 	logs.PrintLog(r.Context(), "[delivery] LoginStore", fmt.Sprintf("Store logged in successfully: %+v", inputData.Login))
 }
+
+func (h *Handler) LogoutStore(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		logs.PrintLog(r.Context(), "[delivery] LogoutStore", "Method not allowed")
+		response.SendErrorResponse("method not allowed", http.StatusMethodNotAllowed, w)
+		return
+	}
+
+	cookieValue, err := r.Cookie("session_id")
+	if err != nil {
+		logs.PrintLog(r.Context(), "[delivery] LogoutStore", "Cookie not found")
+		response.SendErrorResponse("cookie not found", http.StatusUnauthorized, w)
+		return
+	}
+
+	err = h.usecase.LogoutStore(r.Context(), cookieValue.Value)
+	if err != nil {
+		logs.PrintLog(r.Context(), "[delivery] LogoutStore", err.Error())
+		response.SendErrorResponse("server error", http.StatusInternalServerError, w)
+		return
+	}
+
+	cookie.DeleteCookie(w, cookieValue.Value)
+	response.SendOKResponse(w)
+	logs.PrintLog(r.Context(), "[delivery] LogoutStore", "Store logged out successfully")
+}

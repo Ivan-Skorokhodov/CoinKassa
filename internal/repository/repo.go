@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
 )
 
 type RepositoryInterface interface {
@@ -12,7 +13,8 @@ type RepositoryInterface interface {
 	IsLoginUnique(ctx context.Context, login string) (bool, error)
 	GetStoreByCookie(ctx context.Context, cookie string) (*models.Store, error)
 	GetStoreByLogin(ctx context.Context, login string) (*models.Store, error)
-	ChangeCookie(ctx context.Context, store *models.Store, cookie string) error
+	ChangeCookie(ctx context.Context, store *models.Store) error
+	DeleteStoreCookie(ctx context.Context, cookie string) error
 }
 
 type Repository struct {
@@ -69,21 +71,36 @@ func (r *Repository) GetStoreByLogin(ctx context.Context, login string) (*models
 
 	for _, s := range r.stores {
 		if s.Login == login {
-			storeCopy := s
-			return &storeCopy, nil
+			return &s, nil
 		}
 	}
 
 	return nil, nil
 }
 
-func (r *Repository) ChangeCookie(ctx context.Context, store *models.Store, cookie string) error {
+func (r *Repository) ChangeCookie(ctx context.Context, store *models.Store) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	for i, s := range r.stores {
 		if s.ID == store.ID {
-			r.stores[i].Cookie = cookie
+			r.stores[i].Cookie = store.Cookie
+			r.stores[i].ExpireTime = store.ExpireTime
+			return nil
+		}
+	}
+
+	return ErrStoreNotFound
+}
+
+func (r *Repository) DeleteStoreCookie(ctx context.Context, cookie string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for i, s := range r.stores {
+		if s.Cookie == cookie {
+			r.stores[i].Cookie = ""
+			r.stores[i].ExpireTime = time.Now()
 			return nil
 		}
 	}
